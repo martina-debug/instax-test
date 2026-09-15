@@ -1,49 +1,1790 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INSTAX Mini Link 2 Web Editor</title>
-    <!-- Collegamento al file CSS esterno -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#111111" />
+  <title>Instax Mini Link 2 — Stampa</title>
+
+  <style>
+    :root {
+      --bg: #111;
+      --panel: #1c1c1c;
+      --panel-2: #252525;
+      --text: #f5f5f5;
+      --muted: #999;
+      --accent: #fff;
+      --danger: #ff5c5c;
+      --green: #58d68d;
+      --border: #343434;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(920px, 100%);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 5vw, 34px);
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .connection {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+    }
+
+    .dot.connected {
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(88, 214, 141, 0.6);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 600px) minmax(240px, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .editor-card,
+    .control-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .editor-card {
+      padding: 16px;
+    }
+
+    .canvas-wrap {
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      aspect-ratio: 3 / 4;
+      background:
+        linear-gradient(45deg, #202020 25%, transparent 25%),
+        linear-gradient(-45deg, #202020 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #202020 75%),
+        linear-gradient(-45deg, transparent 75%, #202020 75%);
+      background-size: 22px 22px;
+      background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #editor {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #editor.dragging {
+      cursor: grabbing;
+    }
+
+    .guides {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+    }
+
+    .guides::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .guides::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .control-card {
+      padding: 18px;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    button,
+    .file-label {
+      min-height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 10px 13px;
+      cursor: pointer;
+      transition:
+        transform 0.12s ease,
+        background 0.12s ease,
+        opacity 0.12s ease;
+    }
+
+    button:hover,
+    .file-label:hover {
+      background: #303030;
+    }
+
+    button:active,
+    .file-label:active {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .primary:hover {
+      background: #ddd;
+    }
+
+    .danger {
+      color: #ff8585;
+    }
+
+    .file-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .zoom-row {
+      display: grid;
+      grid-template-columns: 46px 1fr 46px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .zoom-value {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .status {
+      background: #151515;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+      min-height: 46px;
+    }
+
+    .status.ok {
+      color: var(--green);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .printer-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .info-box {
+      background: #151515;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .info-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .info-value {
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    .progress-wrap {
+      margin-top: 10px;
+      display: none;
+    }
+
+    .progress-wrap.visible {
+      display: block;
+    }
+
+    progress {
+      width: 100%;
+      height: 8px;
+      accent-color: #fff;
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .warning {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #888;
+      margin-top: 12px;
+    }
+
+    .browser-warning {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255, 92, 92, 0.1);
+      border: 1px solid rgba(255, 92, 92, 0.25);
+      color: #ff9b9b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding: 12px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+
+      .connection {
+        font-size: 11px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="container">
-    <h1>INSTAX Mini Link 2</h1>
-    <p class="subtitle">Modifica e stampa senza App</p>
-    
-    <div class="card">
-        <!-- 📶 CONNESSIONE BLUETOOTH -->
-        <button id="connectButton">📶 Connetti Stampante</button>
+  <main class="app">
 
-        <!-- 📷 SCELTA FOTO -->
-        <label id="photoButton" for="photoInput">📷 Scegli foto</label>
-        <input id="photoInput" type="file" accept="image/*">
+    <header>
+      <div>
+        <h1>Instax Mini Link 2</h1>
+        <div class="subtitle">Foto → ritaglia → sposta → zoom → stampa</div>
+      </div>
 
-        <!-- EDITOR TOUCH / MOUSE -->
-        <div id="editor" class="editor hidden">
-            <img id="image" draggable="false" alt="">
-            <div class="frame"></div>
-            <div class="center-marker"></div>
-        </div>
+      <div class="connection">
+        <span id="connectionDot" class="dot"></span>
+        <span id="connectionText">Non connessa</span>
+      </div>
+    </header>
 
-        <!-- 🔍 ZOOM SLIDER -->
-        <div id="zoomArea" class="zoom-area hidden">
-            <label for="zoom">🔍 Zoom</label>
-            <input id="zoom" type="range" min="1" max="4" step="0.01" value="1">
-        </div>
-
-        <!-- AZIONI -->
-        <button id="resetButton" class="hidden">↺ Ripristina posizione</button>
-        <button id="printButton" class="hidden" disabled>🖨️ Invia Stampa (Instax)</button>
-
-        <!-- INFORMAZIONI DI STATO -->
-        <div id="info">Connetti la stampante o scegli una foto per iniziare.</div>
-        <div id="status">Dispositivo non connesso</div>
+    <div id="browserWarning" class="browser-warning">
+      Questo browser non espone Web Bluetooth.
+      Usa Chrome o Edge su desktop/Android e apri questa pagina tramite HTTPS
+      (GitHub Pages va bene).
     </div>
-</div>
 
-<!-- Collegamento al file JavaScript esterno -->
-<script src="app.js"></script>
+    <div class="layout">
+
+      <section class="editor-card">
+
+        <div class="canvas-wrap">
+          <canvas id="editor" width="600" height="800"></canvas>
+          <div class="guides"></div>
+        </div>
+
+        <div class="hint">
+          Trascina la foto per spostarla · rotella / pulsanti / pinch per zoom
+        </div>
+
+      </section>
+
+      <aside class="control-card">
+
+        <div class="section">
+          <div class="section-title">1 · Foto</div>
+
+          <label class="file-label" for="fileInput">
+            📷 Scegli una foto
+          </label>
+
+          <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+          />
+        </div>
+
+        <div class="section">
+          <div class="section-title">2 · Bluetooth</div>
+
+          <div class="buttons">
+            <button id="connectBtn" class="primary">
+              📶 Connetti Mini Link 2
+            </button>
+
+            <button id="disconnectBtn" disabled>
+              Disconnetti
+            </button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">3 · Inquadratura</div>
+
+          <div class="zoom-row">
+            <button id="zoomOut" disabled>−</button>
+            <div id="zoomValue" class="zoom-value">100%</div>
+            <button id="zoomIn" disabled>+</button>
+          </div>
+
+          <div style="height:8px"></div>
+
+          <button id="resetBtn" style="width:100%" disabled>
+            ↺ Centra foto
+          </button>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Stampante</div>
+
+          <div class="printer-info">
+            <div class="info-box">
+              <div class="info-label">Batteria</div>
+              <div id="batteryValue" class="info-value">—</div>
+            </div>
+
+            <div class="info-box">
+              <div class="info-label">Foto rimaste</div>
+              <div id="filmValue" class="info-value">—</div>
+            </div>
+
+            <div class="info-box">
+              <div class="info-label">Formato</div>
+              <div id="formatValue" class="info-value">600×800</div>
+            </div>
+
+            <div class="info-box">
+              <div class="info-label">JPEG</div>
+              <div id="jpegValue" class="info-value">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+
+          <button
+            id="printBtn"
+            class="primary"
+            style="width:100%; min-height:56px"
+            disabled
+          >
+            🖨️ Stampa
+          </button>
+
+          <div id="progressWrap" class="progress-wrap">
+            <progress id="progress" max="100" value="0"></progress>
+
+            <div class="progress-text">
+              <span id="progressLabel">Preparazione…</span>
+              <span id="progressPercent">0%</span>
+            </div>
+          </div>
+
+          <div id="status" class="status" style="margin-top:10px">
+            Scegli una foto per iniziare.
+          </div>
+
+          <div class="warning">
+            La stampa consuma una pellicola. Il comando viene inviato
+            direttamente alla stampante via Bluetooth.
+          </div>
+
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+<script>
+"use strict";
+
+/*
+ * ============================================================
+ * INSTAX MINI LINK 2 — ZERO DEPENDENCIES
+ * ============================================================
+ *
+ * Protocollo BLE reverse-engineered dalla community InstaxBLE.
+ *
+ * Mini:
+ *   image:       600 x 800
+ *   chunk:       900 bytes
+ *   max JPEG:    105 KB
+ *
+ * BLE:
+ *   Service:     70954782-2d83-473d-9e5f-81e1d02d5273
+ *   Write:       70954783-2d83-473d-9e5f-81e1d02d5273
+ *   Notify:      70954784-2d83-473d-9e5f-81e1d02d5273
+ */
+
+const BLE = {
+  service: "70954782-2d83-473d-9e5f-81e1d02d5273",
+  write:   "70954783-2d83-473d-9e5f-81e1d02d5273",
+  notify:  "70954784-2d83-473d-9e5f-81e1d02d5273"
+};
+
+const MINI = {
+  width: 600,
+  height: 800,
+  chunkSize: 900,
+  maxBytes: 105 * 1024
+};
+
+const OPCODE = {
+  SUPPORT_FUNCTION_INFO: [0x00, 0x02],
+
+  PRINT_IMAGE_DOWNLOAD_START: [0x10, 0x00],
+  PRINT_IMAGE_DOWNLOAD_DATA:  [0x10, 0x01],
+  PRINT_IMAGE_DOWNLOAD_END:   [0x10, 0x02],
+  PRINT_IMAGE_DOWNLOAD_CANCEL:[0x10, 0x03],
+
+  PRINT_IMAGE: [0x10, 0x80]
+};
+
+const INFO = {
+  IMAGE_SUPPORT: 0x00,
+  BATTERY: 0x01,
+  PRINTER_FUNCTION: 0x02
+};
+
+
+/* ============================================================
+   DOM
+   ============================================================ */
+
+const fileInput = document.getElementById("fileInput");
+const editor = document.getElementById("editor");
+const ctx = editor.getContext("2d");
+
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const printBtn = document.getElementById("printBtn");
+
+const zoomInBtn = document.getElementById("zoomIn");
+const zoomOutBtn = document.getElementById("zoomOut");
+const resetBtn = document.getElementById("resetBtn");
+
+const zoomValue = document.getElementById("zoomValue");
+
+const statusEl = document.getElementById("status");
+const browserWarning = document.getElementById("browserWarning");
+
+const connectionDot = document.getElementById("connectionDot");
+const connectionText = document.getElementById("connectionText");
+
+const batteryValue = document.getElementById("batteryValue");
+const filmValue = document.getElementById("filmValue");
+const formatValue = document.getElementById("formatValue");
+const jpegValue = document.getElementById("jpegValue");
+
+const progressWrap = document.getElementById("progressWrap");
+const progress = document.getElementById("progress");
+const progressLabel = document.getElementById("progressLabel");
+const progressPercent = document.getElementById("progressPercent");
+
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+
+let device = null;
+let server = null;
+let writeCharacteristic = null;
+let notifyCharacteristic = null;
+
+let imageBitmap = null;
+
+let zoom = 1;
+let panX = 0;
+let panY = 0;
+
+let photosLeft = null;
+let battery = null;
+
+let isPrinting = false;
+let pendingResponse = null;
+
+let pointers = new Map();
+let dragStart = null;
+let pinchStart = null;
+
+
+/* ============================================================
+   BASIC UI
+   ============================================================ */
+
+function setStatus(message, type = "") {
+  statusEl.textContent = message;
+  statusEl.className = "status" + (type ? " " + type : "");
+}
+
+function setConnection(connected) {
+  connectionDot.classList.toggle("connected", connected);
+  connectionText.textContent = connected ? "Connessa" : "Non connessa";
+
+  connectBtn.disabled = connected || isPrinting;
+  disconnectBtn.disabled = !connected || isPrinting;
+
+  updateButtons();
+}
+
+function updateButtons() {
+  const hasImage = !!imageBitmap;
+  const connected = !!writeCharacteristic && !!device?.gatt?.connected;
+
+  zoomInBtn.disabled = !hasImage || isPrinting;
+  zoomOutBtn.disabled = !hasImage || isPrinting;
+  resetBtn.disabled = !hasImage || isPrinting;
+
+  printBtn.disabled =
+    !hasImage ||
+    !connected ||
+    isPrinting ||
+    photosLeft === 0;
+}
+
+function setProgress(percent, label) {
+  const value = Math.max(0, Math.min(100, percent));
+
+  progressWrap.classList.add("visible");
+  progress.value = value;
+  progressPercent.textContent = Math.round(value) + "%";
+
+  if (label) {
+    progressLabel.textContent = label;
+  }
+}
+
+
+/* ============================================================
+   BROWSER CHECK
+   ============================================================ */
+
+if (!("bluetooth" in navigator)) {
+  browserWarning.style.display = "block";
+}
+
+
+/* ============================================================
+   IMAGE EDITOR
+   ============================================================ */
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function getDrawMetrics() {
+  if (!imageBitmap) return null;
+
+  const baseScale = Math.max(
+    MINI.width / imageBitmap.width,
+    MINI.height / imageBitmap.height
+  );
+
+  const scale = baseScale * zoom;
+
+  const width = imageBitmap.width * scale;
+  const height = imageBitmap.height * scale;
+
+  const centeredX = (MINI.width - width) / 2;
+  const centeredY = (MINI.height - height) / 2;
+
+  const maxPanX = Math.max(0, (width - MINI.width) / 2);
+  const maxPanY = Math.max(0, (height - MINI.height) / 2);
+
+  panX = clamp(panX, -maxPanX, maxPanX);
+  panY = clamp(panY, -maxPanY, maxPanY);
+
+  return {
+    x: centeredX + panX,
+    y: centeredY + panY,
+    width,
+    height
+  };
+}
+
+function drawEditor() {
+  ctx.clearRect(0, 0, MINI.width, MINI.height);
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, MINI.width, MINI.height);
+
+  if (!imageBitmap) {
+    ctx.fillStyle = "#888";
+    ctx.font = "20px system-ui";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Scegli una foto",
+      MINI.width / 2,
+      MINI.height / 2
+    );
+    return;
+  }
+
+  const m = getDrawMetrics();
+
+  ctx.save();
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  ctx.drawImage(
+    imageBitmap,
+    m.x,
+    m.y,
+    m.width,
+    m.height
+  );
+
+  ctx.restore();
+
+  updateZoomLabel();
+}
+
+function updateZoomLabel() {
+  zoomValue.textContent = Math.round(zoom * 100) + "%";
+}
+
+function setZoom(nextZoom) {
+  zoom = clamp(nextZoom, 1, 5);
+  getDrawMetrics();
+  drawEditor();
+}
+
+function resetImage() {
+  zoom = 1;
+  panX = 0;
+  panY = 0;
+  drawEditor();
+}
+
+function pointerPosition(event) {
+  const rect = editor.getBoundingClientRect();
+
+  return {
+    x: (event.clientX - rect.left) * (MINI.width / rect.width),
+    y: (event.clientY - rect.top) * (MINI.height / rect.height)
+  };
+}
+
+function distanceBetween(a, b) {
+  return Math.hypot(
+    a.clientX - b.clientX,
+    a.clientY - b.clientY
+  );
+}
+
+editor.addEventListener("pointerdown", (event) => {
+  if (!imageBitmap || isPrinting) return;
+
+  editor.setPointerCapture(event.pointerId);
+
+  pointers.set(event.pointerId, event);
+
+  if (pointers.size === 1) {
+    const p = pointerPosition(event);
+
+    dragStart = {
+      pointerX: p.x,
+      pointerY: p.y,
+      panX,
+      panY
+    };
+
+    editor.classList.add("dragging");
+  }
+
+  if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+
+    pinchStart = {
+      distance: distanceBetween(a, b),
+      zoom
+    };
+
+    dragStart = null;
+  }
+});
+
+editor.addEventListener("pointermove", (event) => {
+  if (!pointers.has(event.pointerId)) return;
+
+  pointers.set(event.pointerId, event);
+
+  if (pointers.size === 2 && pinchStart) {
+    const [a, b] = [...pointers.values()];
+
+    const currentDistance = distanceBetween(a, b);
+
+    if (pinchStart.distance > 0) {
+      setZoom(
+        pinchStart.zoom *
+        (currentDistance / pinchStart.distance)
+      );
+    }
+
+    return;
+  }
+
+  if (pointers.size === 1 && dragStart) {
+    const p = pointerPosition(event);
+
+    panX =
+      dragStart.panX +
+      (p.x - dragStart.pointerX);
+
+    panY =
+      dragStart.panY +
+      (p.y - dragStart.pointerY);
+
+    getDrawMetrics();
+    drawEditor();
+  }
+});
+
+function endPointer(event) {
+  pointers.delete(event.pointerId);
+
+  if (pointers.size < 2) {
+    pinchStart = null;
+  }
+
+  if (pointers.size === 0) {
+    dragStart = null;
+    editor.classList.remove("dragging");
+  }
+}
+
+editor.addEventListener("pointerup", endPointer);
+editor.addEventListener("pointercancel", endPointer);
+editor.addEventListener("pointerleave", () => {});
+
+editor.addEventListener(
+  "wheel",
+  (event) => {
+    if (!imageBitmap || isPrinting) return;
+
+    event.preventDefault();
+
+    const factor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+
+    setZoom(zoom * factor);
+  },
+  { passive: false }
+);
+
+
+/* ============================================================
+   LOAD PHOTO
+   ============================================================ */
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files?.[0];
+
+  if (!file) return;
+
+  try {
+    setStatus("Caricamento foto…");
+
+    if (imageBitmap && imageBitmap.close) {
+      imageBitmap.close();
+    }
+
+    if ("createImageBitmap" in window) {
+      try {
+        imageBitmap = await createImageBitmap(file, {
+          imageOrientation: "from-image"
+        });
+      } catch {
+        imageBitmap = await createImageBitmap(file);
+      }
+    } else {
+      imageBitmap = await loadImageFallback(file);
+    }
+
+    resetImage();
+
+    setStatus(
+      `Foto caricata: ${imageBitmap.width}×${imageBitmap.height}px`,
+      "ok"
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    imageBitmap = null;
+
+    setStatus(
+      "Impossibile caricare questa immagine.",
+      "error"
+    );
+  }
+
+  updateButtons();
+});
+
+function loadImageFallback(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Immagine non valida"));
+    };
+
+    img.src = url;
+  });
+}
+
+
+/* ============================================================
+   ZOOM CONTROLS
+   ============================================================ */
+
+zoomInBtn.addEventListener("click", () => {
+  setZoom(zoom * 1.2);
+});
+
+zoomOutBtn.addEventListener("click", () => {
+  setZoom(zoom / 1.2);
+});
+
+resetBtn.addEventListener("click", resetImage);
+
+
+/* ============================================================
+   BLE PACKET HELPERS
+   ============================================================ */
+
+function opcodeEquals(a, b) {
+  return a[0] === b[0] && a[1] === b[1];
+}
+
+function makePacket(opcode, payload = new Uint8Array()) {
+  const length = 7 + payload.length;
+
+  const packet = new Uint8Array(length);
+
+  // Header "Ab"
+  packet[0] = 0x41;
+  packet[1] = 0x62;
+
+  // Big endian packet length
+  packet[2] = (length >> 8) & 0xff;
+  packet[3] = length & 0xff;
+
+  // Opcode
+  packet[4] = opcode[0];
+  packet[5] = opcode[1];
+
+  packet.set(payload, 6);
+
+  // Checksum:
+  // (255 - (sum(all previous bytes) & 255)) & 255
+  let sum = 0;
+
+  for (let i = 0; i < length - 1; i++) {
+    sum = (sum + packet[i]) & 0xff;
+  }
+
+  packet[length - 1] = (255 - sum) & 0xff;
+
+  return packet;
+}
+
+function makeInfoPacket(infoType) {
+  return makePacket(
+    OPCODE.SUPPORT_FUNCTION_INFO,
+    new Uint8Array([infoType])
+  );
+}
+
+function readBigEndian16(bytes, offset) {
+  return (
+    (bytes[offset] << 8) |
+    bytes[offset + 1]
+  );
+}
+
+function readBigEndian32(bytes, offset) {
+  return (
+    bytes[offset] * 0x1000000 +
+    bytes[offset + 1] * 0x10000 +
+    bytes[offset + 2] * 0x100 +
+    bytes[offset + 3]
+  );
+}
+
+
+/* ============================================================
+   BLE NOTIFICATIONS
+   ============================================================ */
+
+function handleNotification(event) {
+  const bytes = new Uint8Array(
+    event.target.value.buffer.slice(
+      event.target.value.byteOffset,
+      event.target.value.byteOffset +
+      event.target.value.byteLength
+    )
+  );
+
+  if (bytes.length < 7) {
+    return;
+  }
+
+  if (pendingResponse) {
+    const resolver = pendingResponse;
+    pendingResponse = null;
+    resolver(bytes);
+  }
+}
+
+async function waitForResponse(timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      if (pendingResponse) {
+        pendingResponse = null;
+      }
+
+      reject(
+        new Error(
+          "Timeout: la stampante non ha risposto."
+        )
+      );
+    }, timeout);
+
+    pendingResponse = (bytes) => {
+      clearTimeout(timer);
+      resolve(bytes);
+    };
+  });
+}
+
+
+/* ============================================================
+   BLE WRITE
+   ============================================================ */
+
+async function writeBytes(bytes) {
+  if (!writeCharacteristic) {
+    throw new Error("Stampante non connessa.");
+  }
+
+  /*
+   * BLE MTU tipico usato dal protocollo Instax:
+   * 182 byte per singola scrittura.
+   */
+  const chunkSize = 182;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.slice(
+      i,
+      Math.min(i + chunkSize, bytes.length)
+    );
+
+    if (
+      typeof writeCharacteristic.writeValueWithoutResponse ===
+      "function" &&
+      writeCharacteristic.properties.writeWithoutResponse
+    ) {
+      await writeCharacteristic.writeValueWithoutResponse(chunk);
+    } else if (
+      typeof writeCharacteristic.writeValueWithResponse ===
+      "function"
+    ) {
+      await writeCharacteristic.writeValueWithResponse(chunk);
+    } else {
+      // Compatibilità con implementazioni Web Bluetooth più vecchie.
+      await writeCharacteristic.writeValue(chunk);
+    }
+  }
+}
+
+
+/*
+ * Invia un intero pacchetto e aspetta la risposta della stampante.
+ */
+async function sendPacket(packet, timeout = 10000) {
+  if (!notifyCharacteristic) {
+    throw new Error("Canale notifiche BLE non disponibile.");
+  }
+
+  const responsePromise = waitForResponse(timeout);
+
+  try {
+    await writeBytes(packet);
+  } catch (error) {
+    pendingResponse = null;
+    throw error;
+  }
+
+  return await responsePromise;
+}
+
+
+/* ============================================================
+   PRINTER STATUS
+   ============================================================ */
+
+function parseStatusPacket(packet) {
+  if (packet.length < 8) return;
+
+  const opcode = [packet[4], packet[5]];
+  const infoType = packet[7];
+
+  if (!opcodeEquals(opcode, OPCODE.SUPPORT_FUNCTION_INFO)) {
+    return;
+  }
+
+  // packet[6] = return code
+  const returnCode = packet[6];
+
+  if (returnCode !== 0x00) {
+    return;
+  }
+
+  if (infoType === INFO.IMAGE_SUPPORT) {
+    if (packet.length >= 12) {
+      const width = readBigEndian16(packet, 8);
+      const height = readBigEndian16(packet, 10);
+
+      formatValue.textContent =
+        `${width}×${height}`;
+
+      if (width !== 600 || height !== 800) {
+        throw new Error(
+          `Stampante non compatibile: formato ${width}×${height}.`
+        );
+      }
+    }
+  }
+
+  if (infoType === INFO.BATTERY) {
+    if (packet.length >= 10) {
+      battery = packet[9];
+      batteryValue.textContent = battery + "%";
+    }
+  }
+
+  if (infoType === INFO.PRINTER_FUNCTION) {
+    if (packet.length >= 9) {
+      const dataByte = packet[8];
+
+      photosLeft = dataByte & 0x0f;
+
+      const charging =
+        (dataByte & 0x80) !== 0;
+
+      filmValue.textContent =
+        photosLeft + "/10" +
+        (charging ? " · ⚡" : "");
+
+      updateButtons();
+    }
+  }
+}
+
+async function refreshPrinterStatus() {
+  if (!writeCharacteristic) return;
+
+  try {
+    const imageInfo = await sendPacket(
+      makeInfoPacket(INFO.IMAGE_SUPPORT),
+      5000
+    );
+
+    parseStatusPacket(imageInfo);
+
+    const batteryInfo = await sendPacket(
+      makeInfoPacket(INFO.BATTERY),
+      5000
+    );
+
+    parseStatusPacket(batteryInfo);
+
+    const printerInfo = await sendPacket(
+      makeInfoPacket(INFO.PRINTER_FUNCTION),
+      5000
+    );
+
+    parseStatusPacket(printerInfo);
+
+  } catch (error) {
+    console.warn("Status printer non disponibile:", error);
+  }
+}
+
+
+/* ============================================================
+   CONNECT
+   ============================================================ */
+
+connectBtn.addEventListener("click", connectPrinter);
+
+async function connectPrinter() {
+  if (!("bluetooth" in navigator)) {
+    setStatus(
+      "Web Bluetooth non è disponibile in questo browser.",
+      "error"
+    );
+    return;
+  }
+
+  try {
+    setStatus("Ricerca della Mini Link 2…");
+
+    /*
+     * Il protocollo BLE Instax espone l'endpoint IOS/GATT
+     * come INSTAX-XXXXXXXX(IOS).
+     */
+    device = await navigator.bluetooth.requestDevice({
+      filters: [
+        {
+          namePrefix: "INSTAX-"
+        }
+      ],
+      optionalServices: [BLE.service]
+    });
+
+    device.addEventListener(
+      "gattserverdisconnected",
+      handleDisconnected
+    );
+
+    setStatus("Connessione Bluetooth…");
+
+    server = await device.gatt.connect();
+
+    const service =
+      await server.getPrimaryService(BLE.service);
+
+    writeCharacteristic =
+      await service.getCharacteristic(BLE.write);
+
+    notifyCharacteristic =
+      await service.getCharacteristic(BLE.notify);
+
+    notifyCharacteristic.addEventListener(
+      "characteristicvaluechanged",
+      handleNotification
+    );
+
+    await notifyCharacteristic.startNotifications();
+
+    setConnection(true);
+
+    setStatus(
+      `Connessa a ${device.name || "INSTAX"}.`,
+      "ok"
+    );
+
+    await refreshPrinterStatus();
+
+    if (photosLeft === 0) {
+      setStatus(
+        "Stampante connessa, ma non risultano pellicole disponibili.",
+        "error"
+      );
+    } else {
+      setStatus(
+        "Mini Link 2 pronta per la stampa.",
+        "ok"
+      );
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    writeCharacteristic = null;
+    notifyCharacteristic = null;
+    server = null;
+
+    setConnection(false);
+
+    if (error?.name === "NotFoundError") {
+      setStatus(
+        "Selezione Bluetooth annullata.",
+        "error"
+      );
+    } else {
+      setStatus(
+        "Connessione fallita: " +
+        (error?.message || error),
+        "error"
+      );
+    }
+  }
+
+  updateButtons();
+}
+
+function handleDisconnected() {
+  writeCharacteristic = null;
+  notifyCharacteristic = null;
+  server = null;
+
+  setConnection(false);
+
+  setStatus(
+    "Stampante disconnessa.",
+    "error"
+  );
+}
+
+
+/* ============================================================
+   DISCONNECT
+   ============================================================ */
+
+disconnectBtn.addEventListener("click", disconnectPrinter);
+
+async function disconnectPrinter() {
+  try {
+    if (device?.gatt?.connected) {
+      device.gatt.disconnect();
+    }
+  } catch (error) {
+    console.warn(error);
+  }
+
+  writeCharacteristic = null;
+  notifyCharacteristic = null;
+  server = null;
+
+  setConnection(false);
+
+  setStatus("Stampante disconnessa.");
+}
+
+
+/* ============================================================
+   EXPORT 600x800 JPEG
+   ============================================================ */
+
+function drawFinalImage(canvas) {
+  const outputCtx = canvas.getContext("2d", {
+    alpha: false
+  });
+
+  outputCtx.fillStyle = "#fff";
+  outputCtx.fillRect(
+    0,
+    0,
+    MINI.width,
+    MINI.height
+  );
+
+  const m = getDrawMetrics();
+
+  outputCtx.imageSmoothingEnabled = true;
+  outputCtx.imageSmoothingQuality = "high";
+
+  outputCtx.drawImage(
+    imageBitmap,
+    m.x,
+    m.y,
+    m.width,
+    m.height
+  );
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(
+            new Error("Impossibile creare il JPEG.")
+          );
+          return;
+        }
+
+        resolve(blob);
+      },
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
+
+/*
+ * Cerca la qualità JPEG più alta possibile restando
+ * sotto il limite del Mini Link 2.
+ */
+async function createPrintJpeg() {
+  const canvas = document.createElement("canvas");
+
+  canvas.width = MINI.width;
+  canvas.height = MINI.height;
+
+  drawFinalImage(canvas);
+
+  let low = 0.05;
+  let high = 1.0;
+
+  let bestBlob = null;
+
+  for (let i = 0; i < 9; i++) {
+    const quality = (low + high) / 2;
+
+    const blob = await canvasToBlob(
+      canvas,
+      quality
+    );
+
+    if (blob.size <= MINI.maxBytes) {
+      bestBlob = blob;
+      low = quality;
+    } else {
+      high = quality;
+    }
+  }
+
+  /*
+   * Se anche la qualità minima non basta, facciamo
+   * un'ultima prova molto compressa.
+   */
+  if (!bestBlob) {
+    bestBlob = await canvasToBlob(
+      canvas,
+      0.05
+    );
+  }
+
+  if (bestBlob.size > MINI.maxBytes) {
+    throw new Error(
+      "L'immagine non entra nel limite JPEG della Mini Link 2."
+    );
+  }
+
+  return bestBlob;
+}
+
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+
+printBtn.addEventListener("click", printPhoto);
+
+async function printPhoto() {
+  if (isPrinting) return;
+
+  if (!imageBitmap) {
+    setStatus(
+      "Prima scegli una foto.",
+      "error"
+    );
+    return;
+  }
+
+  if (!writeCharacteristic) {
+    setStatus(
+      "Prima collega la Mini Link 2.",
+      "error"
+    );
+    return;
+  }
+
+  if (photosLeft === 0) {
+    setStatus(
+      "La stampante non segnala pellicola disponibile.",
+      "error"
+    );
+    return;
+  }
+
+  isPrinting = true;
+  updateButtons();
+
+  try {
+    /* --------------------------------------------
+       1. CREA JPEG
+       -------------------------------------------- */
+
+    setProgress(
+      0,
+      "Preparazione JPEG…"
+    );
+
+    const blob = await createPrintJpeg();
+
+    jpegValue.textContent =
+      Math.round(blob.size / 1024) + " KB";
+
+    const imageBytes =
+      new Uint8Array(
+        await blob.arrayBuffer()
+      );
+
+    /* --------------------------------------------
+       2. DOWNLOAD START
+       -------------------------------------------- */
+
+    setProgress(
+      5,
+      "Avvio trasferimento…"
+    );
+
+    const startPayload = new Uint8Array(8);
+
+    /*
+     * pictureType = 0x02
+     * picturePrintOption = 0x00
+     * picturePrintOption2 = 0x00
+     * zero = 0x00
+     *
+     * + uint32 big endian = dimensione JPEG
+     */
+
+    startPayload[0] = 0x02;
+    startPayload[1] = 0x00;
+    startPayload[2] = 0x00;
+    startPayload[3] = 0x00;
+
+    startPayload[4] =
+      (imageBytes.length >>> 24) & 0xff;
+
+    startPayload[5] =
+      (imageBytes.length >>> 16) & 0xff;
+
+    startPayload[6] =
+      (imageBytes.length >>> 8) & 0xff;
+
+    startPayload[7] =
+      imageBytes.length & 0xff;
+
+    await sendPacket(
+      makePacket(
+        OPCODE.PRINT_IMAGE_DOWNLOAD_START,
+        startPayload
+      ),
+      10000
+    );
+
+    /* --------------------------------------------
+       3. SEND CHUNKS
+       -------------------------------------------- */
+
+    const totalChunks =
+      Math.ceil(
+        imageBytes.length /
+        MINI.chunkSize
+      );
+
+    for (
+      let index = 0;
+      index < totalChunks;
+      index++
+    ) {
+      const start =
+        index * MINI.chunkSize;
+
+      const end =
+        Math.min(
+          start + MINI.chunkSize,
+          imageBytes.length
+        );
+
+      const actual =
+        imageBytes.slice(start, end);
+
+      /*
+       * Ogni blocco deve essere lungo esattamente
+       * 900 byte. L'ultimo viene riempito con zero.
+       */
+      const chunk =
+        new Uint8Array(
+          MINI.chunkSize
+        );
+
+      chunk.set(actual);
+
+      /*
+       * Payload:
+       * uint32 big endian = numero chunk
+       * + 900 byte immagine
+       */
+      const payload =
+        new Uint8Array(
+          4 + MINI.chunkSize
+        );
+
+      payload[0] =
+        (index >>> 24) & 0xff;
+
+      payload[1] =
+        (index >>> 16) & 0xff;
+
+      payload[2] =
+        (index >>> 8) & 0xff;
+
+      payload[3] =
+        index & 0xff;
+
+      payload.set(chunk, 4);
+
+      await sendPacket(
+        makePacket(
+          OPCODE.PRINT_IMAGE_DOWNLOAD_DATA,
+          payload
+        ),
+        15000
+      );
+
+      const percent =
+        5 +
+        ((index + 1) /
+          totalChunks) *
+          80;
+
+      setProgress(
+        percent,
+        `Invio foto… ${index + 1}/${totalChunks}`
+      );
+    }
+
+    /* --------------------------------------------
+       4. DOWNLOAD END
+       -------------------------------------------- */
+
+    setProgress(
+      88,
+      "Finalizzazione foto…"
+    );
+
+    await sendPacket(
+      makePacket(
+        OPCODE.PRINT_IMAGE_DOWNLOAD_END
+      ),
+      10000
+    );
+
+    /* --------------------------------------------
+       5. PRINT
+       -------------------------------------------- */
+
+    setProgress(
+      92,
+      "Invio comando di stampa…"
+    );
+
+    await sendPacket(
+      makePacket(
+        OPCODE.PRINT_IMAGE
+      ),
+      15000
+    );
+
+    /* --------------------------------------------
+       6. REFRESH STATUS
+       -------------------------------------------- */
+
+    setProgress(
+      98,
+      "Stampa avviata…"
+    );
+
+    /*
+     * Chiediamo nuovamente lo stato della stampante.
+     * Il Mini Link decrementa il numero di foto disponibili.
+     */
+    try {
+      const info =
+        await sendPacket(
+          makeInfoPacket(
+            INFO.PRINTER_FUNCTION
+          ),
+          5000
+        );
+
+      parseStatusPacket(info);
+    } catch (error) {
+      console.warn(
+        "Aggiornamento stato non riuscito:",
+        error
+      );
+    }
+
+    setProgress(
+      100,
+      "Stampa avviata ✓"
+    );
+
+    setStatus(
+      "Foto inviata alla Mini Link 2. Attendi l'uscita della stampa.",
+      "ok"
+    );
+
+    /*
+     * Dopo qualche secondo nascondiamo la progress bar.
+     */
+    setTimeout(() => {
+      progressWrap.classList.remove("visible");
+    }, 5000);
+
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      "Errore durante la stampa: " +
+      (error?.message || error),
+      "error"
+    );
+
+    progressWrap.classList.remove("visible");
+
+  } finally {
+    isPrinting = false;
+    updateButtons();
+  }
+}
+
+
+/* ============================================================
+   INITIAL DRAW
+   ============================================================ */
+
+drawEditor();
+updateButtons();
+
+</script>
+
 </body>
 </html>
