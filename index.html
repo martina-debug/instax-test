@@ -1,0 +1,14 @@
+<!DOCTYPE html> <html lang="it"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Test INSTAX Mini Link 2</title> <style> body { font-family: Arial, sans-serif; text-align: center; background: #f5f5f5; padding: 40px 20px; } .box { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 5px 20px #0002; } button { width: 100%; padding: 16px; margin-top: 20px; border: 0; border-radius: 12px; background: #222; color: white; font-size: 17px; font-weight: bold; cursor: pointer; } #status { margin-top: 25px; padding: 15px; border-radius: 10px; background: #eee; word-break: break-word; } </style> </head> <body> <div class="box">
+<h1>INSTAX Mini Link 2</h1>
+
+<p>Test connessione Bluetooth</p>
+
+<button id="connect">
+  📶 Cerca Mini Link 2
+</button>
+
+<div id="status">
+  Stampante non collegata
+</div>
+
+</div> <script> const button = document.getElementById("connect"); const status = document.getElementById("status"); button.addEventListener("click", async () => { if (!navigator.bluetooth) { status.textContent = "❌ Questo browser non supporta Web Bluetooth."; return; } try { status.textContent = "🔍 Ricerca della Mini Link 2..."; /* * UUID del servizio Bluetooth utilizzato * dalla famiglia INSTAX Link. * * Usiamo il filtro sul nome per evitare * di collegarci accidentalmente ad altri * dispositivi Bluetooth. */ const device = await navigator.bluetooth.requestDevice({ filters: [ { namePrefix: "INSTAX" } ], optionalServices: [ "0000ff00-0000-1000-8000-00805f9b34fb" ] }); status.textContent = "📡 Dispositivo trovato: " + (device.name || "INSTAX"); console.log("Dispositivo:", device); const server = await device.gatt.connect(); status.textContent = "✅ Collegata: " + (device.name || "INSTAX"); console.log("GATT connesso:", server); button.textContent = "✅ Mini Link 2 collegata"; button.disabled = true; } catch (error) { console.error(error); if (error.name === "NotFoundError") { status.textContent = "⚠️ Nessun dispositivo selezionato."; } else { status.textContent = "❌ Errore: " + error.message; } } }); </script> </body> </html>
